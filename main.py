@@ -23,9 +23,8 @@ Fixed Parameters:
 
 import cv2
 import numpy as np
-import os
 from scipy import spatial
-from features import HarrisKeypointDetector, MOPSFeatureDescriptor, SSDFeatureMatcher, ORBKeypointDetector, ORBFeatureMatcher, ORBFeatureDescriptor
+from features import HarrisKeypointDetector, MOPSFeatureDescriptor,ORBKeypointDetector, ORBFeatureMatcher, ORBFeatureDescriptor
 
 # Your TunedHarrisDetector should extend HarrisKeypointDetector and apply non-max suppression using HARRIS_KERNEL.
 class TunedHarrisDetector(HarrisKeypointDetector):
@@ -46,9 +45,7 @@ class TunedHarrisDetector(HarrisKeypointDetector):
         sorted_indices = np.argsort(keypoints2array[:, 2])  # 获取第三列的索引排序
         keypointsArraySorted = keypoints2array[sorted_indices]  # 依据排序后的索引重排数组
         keypointsSorted = [keypoints[i] for i in sorted_indices]
-        '''
-        我寻思non-maximum不是在detectKeypoints里已经实现了吗。。。？
-        '''
+
         # 4. Return only keypoints with response > HARRIS_THRESHOLD.
         for j in range(keypoints_len):
             # print(keypointsSorted[j].response)
@@ -64,9 +61,6 @@ class RatioTestMatcher:
     def matchFeatures(self, desc1, desc2, ratio_thresh=MATCH_RATIO_THRESH):
         # 1. Compute the Euclidean distance matrix between desc1 and desc2.
         # 2. For each descriptor, find the closest two matches and apply a ratio test with ratio_thresh.
-        '''
-        到底要干嘛？ratiofeaturematch能不能用？？？
-        '''
         distances = spatial.distance.cdist(desc1,desc2,'euclidean')
         indices = np.argmin(distances,axis=1)   #对于每一个desc1，desc2中哪一个和他的距离最小
 
@@ -122,31 +116,22 @@ def draw_matches(img1, kp1, img2, kp2, matches, output_path, max_matches=50):
 
 if __name__ == "__main__":
     # 1. Initialize your modules (TunedHarrisDetector, MOPSFeatureDescriptor, RatioTestMatcher).
-    HD = HarrisKeypointDetector()
     THD = TunedHarrisDetector() #from image to keypoints
-    ORB_key = ORBKeypointDetector()
     MOP = MOPSFeatureDescriptor() #from keypoints to desc
-    ORB_desc = ORBFeatureDescriptor()
     RTM = RatioTestMatcher() #from desc to mathes
-    ORB_FM = ORBFeatureMatcher()
+
     # 2. Read left.jpg and right.jpg from the images folder.
     imageL = cv2.imread("images/left.jpg")
     imageR = cv2.imread("images/right.jpg")
 
     # 3. Detect keypoints, compute descriptors, and match features.
-    keyL = HD.detectKeypoints(imageL)
-    keyR = HD.detectKeypoints(imageR)
-    # keyL_ORB = ORB_key.detectKeypoints(imageL)
-    # keyR_ORB = ORB_key.detectKeypoints(imageR)
+    keyL = THD.detectKeypoints(imageL)
+    keyR = THD.detectKeypoints(imageR)
 
     descL = MOP.describeFeatures(imageL,keyL)
     descR = MOP.describeFeatures(imageR,keyR)
-    # descL_ORB = MOP.describeFeatures(imageL,keyL_ORB)
-    # descR_ORB = MOP.describeFeatures(imageR,keyR_ORB)
 
     match = RTM.matchFeatures(descL,descR)
-    # match_orb = RTM.matchFeatures(descL_ORB,descR_ORB)
-
 
     # 4. Draw and save the keypoints and match results.
     draw_harris_keypoints(imageL,keyL,"images/left_harris.jpg")
